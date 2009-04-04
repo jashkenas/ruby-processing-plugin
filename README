@@ -22,8 +22,8 @@ PREREQUISITES:
   
 INSTALL:
 
-  Drop the RubyProcessingPlugin folder into a "tools" directory inside your
-  main Processing sketchbook folder.
+  Drop the RubyProcessingPlugin folder into a "tools" directory inside your main 
+  Processing sketchbook folder. Open Processing and look in the "Tools" menu.
   
 BUILD:
 
