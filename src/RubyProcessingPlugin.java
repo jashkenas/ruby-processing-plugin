@@ -24,9 +24,10 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   static final int      BUTTON_GAP      = 5;
   static final int      IMAGE_SIZE      = 33;
   static final int      OFFSET_OVER     = 95;
-  static final int      OFFSET_DOWN     = 8;
+  static final int      OFFSET_DOWN     = 25;
   static final int      WIDTH           = 190;
-  static final int      HEIGHT          = 50;
+  static final int      HEIGHT          = 67;
+  static final int      BAR_HEIGHT      = 17;
   static final String   WIKI_URL        = "http://wiki.github.com/jashkenas/ruby-processing";
                         
   private Editor        _editor;
@@ -36,6 +37,8 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   private Image         _background;
   private Image         _buttonsImage;
   private int           _currentButton  = -1;
+  private Point         _dragPoint;
+  private boolean       _dragging       = false;
                         
   private JButton       _runButton;
   private JButton       _watchButton;
@@ -58,6 +61,7 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   public void run() {
     _frame.setVisible(true);
     _frame.setSize(WIDTH, HEIGHT + _frame.getInsets().top);
+    _frame.setLocationRelativeTo(_editor);
   }
   
   // For now, we just delegate all commands to an installed ruby-processing gem.
@@ -86,7 +90,6 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
 		_frame.setResizable(false);
 		Base.setIcon(_frame);
     Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-    _frame.setLocation(screen.width / 2, screen.height / 2);
     
     addMouseListener(this);
     addMouseMotionListener(this);                            
@@ -118,11 +121,26 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   }
   
   public void mouseMoved(MouseEvent e)    { handleHover(e.getX(), e.getY()); }
-  public void mouseDragged(MouseEvent e)  {}
-  public void mousePressed(MouseEvent e)  { 
-    if (_currentButton >= 0) runCommand(_commands[_currentButton]); 
+  public void mouseDragged(MouseEvent e)  {
+    Point p = e.getPoint();
+    if (_dragging) {
+      int xDiff = p.x - _dragPoint.x;
+      int yDiff = p.y - _dragPoint.y;
+      Point where = _frame.getLocation();
+      _frame.setLocation(where.x + xDiff, where.y + yDiff);
+    }
   }
-  public void mouseReleased(MouseEvent e) {}
+  public void mousePressed(MouseEvent e)  { 
+    if (_currentButton >= 0) runCommand(_commands[_currentButton]);
+    Point p = e.getPoint();
+    if (p.y < BAR_HEIGHT) {
+      _dragging = true;
+      _dragPoint = p;
+    }
+  }
+  public void mouseReleased(MouseEvent e) {
+    _dragging = false;
+  }
   public void mouseClicked(MouseEvent e)  {}
   public void mouseEntered(MouseEvent e)  {}
   public void mouseExited(MouseEvent e)   {
