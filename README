@@ -1,0 +1,31 @@
+      ___                                 
+     /  /\          ___           ___     
+    /  /::\        /  /\         /  /\    
+   /  /:/\:\      /  /::\       /  /::\   
+  /  /::\ \:\    /  /:/\:\     /  /:/\:\  
+ /__/:/\:\_\:\  /  /::\ \:\   /  /::\ \:\ 
+ \__\/~|::\/:/ /__/:/\:\_\:\ /__/:/\:\_\:\
+    |  |:|::/  \__\/  \:\/:/ \__\/  \:\/:/
+    |  |:|\/        \  \::/       \  \::/ 
+    |__|:|           \__\/         \__\/  
+     \__\|                                
+
+
+The Ruby-Processing Plugin allows you to run Ruby-Processing sketches
+from inside of the Processing IDE ... Blasphemy.
+
+PREREQUISITES:
+
+  * Ruby (for now)
+  * Java (forever)
+  * The ruby-processing gem (perhaps will get vendor'd into this in the future)
+  
+INSTALL:
+
+  Drop the RubyProcessingPlugin folder into a "tools" directory inside your
+  main Processing sketchbook folder.
+  
+BUILD:
+
+  Check make.rb before you run it to make sure that it looks sensible for your
+  setup.
