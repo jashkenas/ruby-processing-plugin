@@ -28,4 +28,4 @@ INSTALL:
 BUILD:
 
   Check make.rb before you run it to make sure that it looks sensible for your
-  setup.
+  setup. You'll need a copy of core.jar and pde.jar to make it compile.
