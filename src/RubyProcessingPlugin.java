@@ -125,8 +125,12 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     repaint();
   }
   
-  public void mouseMoved(MouseEvent e)    { handleHover(e.getX(), e.getY()); }
-  public void mouseDragged(MouseEvent e)  {
+  // A barrage of mouse handlers for this and that...
+  
+  public void mouseMoved(MouseEvent e) { 
+    handleHover(e.getX(), e.getY()); 
+  }
+  public void mouseDragged(MouseEvent e) {
     Point p = e.getPoint();
     if (_dragging) {
       int xDiff = p.x - _dragPoint.x;
@@ -135,7 +139,7 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
       _frame.setLocation(where.x + xDiff, where.y + yDiff);
     }
   }
-  public void mousePressed(MouseEvent e)  { 
+  public void mousePressed(MouseEvent e) { 
     if (_currentButton >= 0) runCommand(_commands[_currentButton]);
     Point p = e.getPoint();
     if (p.y < BAR_HEIGHT) {
@@ -146,29 +150,16 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   public void mouseReleased(MouseEvent e) {
     _dragging = false;
   }
-  public void mouseClicked(MouseEvent e)  {
+  public void mouseClicked(MouseEvent e) {
     Point p = e.getPoint();
+    // Watch out for close button clicks.
     if (p.x > 6 && p.x < 18 && p.y > 2 && p.y < 14 ) {
       _frame.setVisible(false);
     }
   }
-  public void mouseEntered(MouseEvent e)  {}
-  public void mouseExited(MouseEvent e)   {
+  public void mouseEntered(MouseEvent e) {}
+  public void mouseExited(MouseEvent e) {
     _editor.statusEmpty();
   }
   
 }
-
-
-    // _runButton = new JButton("Run");
-    // _runButton.setActionCommand("run");
-    // _runButton.addActionListener(this);
-    // _runButton.setToolTipText("Just run the sketch.");
-    // 
-    // _watchButton = new JButton("Watch");
-    // _watchButton.setActionCommand("watch");
-    // _watchButton.addActionListener(this);
-    // _watchButton.setToolTipText("Run the sketch, reloading every time you save.");
-    // 
-    // surface.add("Center", _runButton);
-    // surface.add("Center", _watchButton);
