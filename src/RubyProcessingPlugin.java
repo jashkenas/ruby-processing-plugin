@@ -5,6 +5,7 @@
 package processing.app.tools;
 
 import processing.app.*;
+import processing.app.syntax.*;
 import processing.core.*;
 
 import javax.swing.*;
@@ -62,6 +63,10 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     _frame.setVisible(true);
     _frame.setSize(WIDTH, HEIGHT + _frame.getInsets().top);
     _frame.setLocationRelativeTo(_editor);
+    // Set the syntax highlighting to Ruby, and force repainting.
+    _editor.getTextArea().setTokenMarker(new RubyTokenMarker());
+    _editor.handleSelectAll();
+    _editor.setSelection(0, 0);
   }
   
   // For now, we just delegate all commands to an installed ruby-processing gem.
@@ -141,7 +146,12 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   public void mouseReleased(MouseEvent e) {
     _dragging = false;
   }
-  public void mouseClicked(MouseEvent e)  {}
+  public void mouseClicked(MouseEvent e)  {
+    Point p = e.getPoint();
+    if (p.x > 6 && p.x < 18 && p.y > 2 && p.y < 14 ) {
+      _frame.setVisible(false);
+    }
+  }
   public void mouseEntered(MouseEvent e)  {}
   public void mouseExited(MouseEvent e)   {
     _editor.statusEmpty();
