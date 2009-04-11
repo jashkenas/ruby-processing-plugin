@@ -16,6 +16,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.net.*;
 import java.io.*;
+import java.util.*;
+
+import org.jruby.*;
+import org.jruby.javasupport.*;
 
 public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputListener {
   
@@ -35,7 +39,8 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   static final int      HEIGHT          = 67;
   static final int      BAR_HEIGHT      = 17;
   static final String   WIKI_URL        = "http://wiki.github.com/jashkenas/ruby-processing";
-                        
+     
+  // Processing-Related variables.                   
   private Editor        _editor;
   private JFrame        _frame;
   private String        _title          = "Ruby-Processing";
@@ -48,6 +53,10 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   private File          _tempFolder;
   private Font          _statusFont;
   private Color         _statusColor;
+  
+  // Ruby-related variables.
+  private Ruby                _ruby;
+  private RubyRuntimeAdapter  _evaler;
   
   // The name of the beast.
   public String getMenuTitle() {
@@ -62,6 +71,7 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     _buttonsImage = new ImageIcon(getClass().getResource("images/buttons.png")).getImage();
     _statusFont = Theme.getFont("buttons.status.font");
     _statusColor = Theme.getColor("buttons.status.color");
+    
     _createControls();
   }
   
@@ -75,6 +85,18 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     _editor.getTextArea().setTokenMarker(new RubyTokenMarker());
     _editor.handleSelectAll();
     _editor.setSelection(0, 0);
+    
+    /////////////////////////////////////////////////////////////
+    // TODO
+    /////////////////////////////////////////////////////////////
+    final RubyInstanceConfig config = new RubyInstanceConfig() {{
+      setLoader(this.getClass().getClassLoader());
+    }};
+    _ruby = Ruby.newInstance(config);
+    _evaler = JavaEmbedUtils.newRuntimeAdapter();
+    
+    _evaler.eval(_ruby, "puts 'hello from java'");
+    _evaler.eval(_ruby, "require 'java'");
   }
   
   // For now, we just delegate all commands to an installed ruby-processing gem.
