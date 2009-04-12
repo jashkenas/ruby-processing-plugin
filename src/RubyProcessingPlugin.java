@@ -1,7 +1,7 @@
 /*
   A simple tool to run Ruby-Processing Sketches from the Processing IDE.
   For now, delegates commands to an installed Ruby-Processing gem.
-  Three buttons: Run, Watch, Help.
+  Three buttons: Run, Stop, Help.
 */
 
 package processing.app.tools;
@@ -23,17 +23,20 @@ import org.jruby.javasupport.*;
 
 public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputListener {
   
-  static final String[] _commands       = {"run", "watch", "help"};
-  static final String[] _capCommands    = {"Run", "Watch", "Help"};
-  static final String[] _statuses       = {"running", "watching"};
+  static final int      RUN             = 1;
+  static final int      LIVE            = 2;
+  static final int      STOP            = 3;
+  static final int      HELP            = 4;
+  static final int[]    _commands       = {RUN, LIVE, STOP, HELP};
+  static final String[] _capCommands    = {"Run", "Live", "Stop", "Help"};
   static final int      BUTTON_COUNT    = _commands.length;
   static final int      BUTTON_WIDTH    = 27;
   static final int      BUTTON_HEIGHT   = 32;
   static final int      BUTTON_GAP      = 5;
   static final int      IMAGE_SIZE      = 33;
-  static final int      OFFSET_OVER     = 125;
+  static final int      OFFSET_OVER     = 105;
   static final int      OFFSET_DOWN     = 25;
-  static final int      TEXT_OVER       = 70;
+  static final int      TEXT_OVER       = 65;
   static final int      TEXT_DOWN       = 45;
   static final int      WIDTH           = 220;
   static final int      HEIGHT          = 67;
@@ -54,9 +57,9 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   private Font          _statusFont;
   private Color         _statusColor;
   
-  // Ruby-related variables.
-  private Ruby                _ruby;
-  private RubyRuntimeAdapter  _evaler;
+  // Ruby-Related variables.
+  private Ruby                  _ruby;
+  private RubyProcessingConsole _console;
   
   // The name of the beast.
   public String getMenuTitle() {
@@ -71,7 +74,6 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     _buttonsImage = new ImageIcon(getClass().getResource("images/buttons.png")).getImage();
     _statusFont = Theme.getFont("buttons.status.font");
     _statusColor = Theme.getColor("buttons.status.color");
-    
     _createControls();
   }
   
@@ -84,40 +86,86 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     // Set the syntax highlighting to Ruby, and force repainting.
     _editor.getTextArea().setTokenMarker(new RubyTokenMarker());
     _editor.handleSelectAll();
-    _editor.setSelection(0, 0);
-    
-    /////////////////////////////////////////////////////////////
-    // TODO
-    /////////////////////////////////////////////////////////////
-    final RubyInstanceConfig config = new RubyInstanceConfig() {{
-      setLoader(this.getClass().getClassLoader());
-    }};
-    _ruby = Ruby.newInstance(config);
-    _evaler = JavaEmbedUtils.newRuntimeAdapter();
-    
-    _evaler.eval(_ruby, "puts 'hello from java'");
-    _evaler.eval(_ruby, "require 'java'");
+    _editor.setSelection(0, 0);  
   }
   
-  // For now, we just delegate all commands to an installed ruby-processing gem.
-  public void runCommand(String command) {
-    if (command == "help") {
-      Base.openURL(WIKI_URL); 
-    } else {
-      try {
-        Sketch sketch = _editor.getSketch();
-        SketchCode code = sketch.getCurrentCode();
-        code.setProgram(_editor.getText());
-        code.save();
-        String name = code.getPrettyName();
-        String path = code.getFile().getAbsolutePath();
-        _editor.statusNotice(_title + ": " + _statuses[_currentButton] + " \"" + name + "\"");
-        _runtime.exec("rp5 " + command + " " + path);
-      } catch (java.io.IOException ex) {
-        System.err.println(ex);
-        System.exit(1);
-      }
+  // Take care of running the command in an embedded Ruby instance.
+  public void runCommand(int command) {
+    switch (command) {
+      case HELP: 
+        Base.openURL(WIKI_URL); 
+        break;
+        
+      case STOP:
+        if (isRunning()) spinDown();
+        break;
+        
+      case LIVE:
+        // _console = new RubyProcessingConsole("TITLE!");
+        // runCommand(RUN);
+        System.out.println("Coming Soon...");
+        break;
+        
+      case RUN:
+        try {
+          Sketch sketch = _editor.getSketch();
+          SketchCode code = sketch.getCurrentCode();
+          code.setProgram(_editor.getText());
+          code.save();
+          String name = code.getPrettyName();
+          String path = code.getFile().getAbsolutePath();
+          _editor.statusNotice(_title + ": running \"" + name + "\"");
+          if (isRunning()) spinDown();
+          spinUp(path);
+        } catch (java.io.IOException ex) {
+          System.err.println(ex);
+          System.exit(1);
+        }
+        break;
+      default: break;
     }
+  }
+  
+  // Spin up a new Ruby VM, start Ruby-Processing in it.
+  private void spinUp(String path) {
+    RubyInstanceConfig config = new RubyInstanceConfig() {{
+      setLoader(this.getClass().getClassLoader());
+    }};
+    if (hasConsole()) config = _console.configureConsole(config);
+    _ruby = Ruby.newInstance(config);
+    if (hasConsole()) _console.startConsole(_ruby);
+    
+    final Ruby go = _ruby;
+    final String where = path;
+    Thread thread = new Thread() {
+      public void run() {
+        try { Thread.sleep(2000); } catch(InterruptedException e) {}
+        go.evalScriptlet("RP5_EMBEDDED = true; ARGV[0] = '" + where + "'; require 'ruby-processing/lib/ruby-processing/runners/run.rb'");
+      }
+    };
+    thread.start();
+  }
+  
+  // Spin down the current running Ruby VM.
+  private void spinDown() {
+    if (hasConsole()) {
+      _console.dispose();
+      _console = null;
+    }
+    _ruby.evalScriptlet("$app.close if $app");
+    // TODO: Seems to leak memory ... System.gc() doesn't help...
+    _ruby.tearDown();
+    _ruby = null;
+  }
+  
+  // Do we have a console?
+  public boolean hasConsole() {
+    return _console != null;
+  }
+  
+  // Are is there a running Ruby VM?
+  public boolean isRunning() {
+    return _ruby != null;
   }
   
   // Get everything all set up and freshly painted.
@@ -161,8 +209,8 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   // Show the light rollovers and set the current button.
   public void handleHover(int x, int y) {
     x = x - OFFSET_OVER;
-    Boolean yMiss = y < OFFSET_DOWN || y > OFFSET_DOWN + BUTTON_HEIGHT;
-    Boolean xMiss = x < 0 || x > BUTTON_COUNT * BUTTON_WIDTH - 1;
+    boolean yMiss = y < OFFSET_DOWN || y > OFFSET_DOWN + BUTTON_HEIGHT;
+    boolean xMiss = x < 0 || x > BUTTON_COUNT * BUTTON_WIDTH - 1;
     _currentButton = xMiss || yMiss ? -1 : x / BUTTON_WIDTH;
     repaint();
   }
