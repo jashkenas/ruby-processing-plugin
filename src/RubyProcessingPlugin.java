@@ -24,19 +24,18 @@ import org.jruby.javasupport.*;
 public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputListener {
   
   static final int      RUN             = 1;
-  static final int      LIVE            = 2;
-  static final int      STOP            = 3;
-  static final int      HELP            = 4;
-  static final int[]    _commands       = {RUN, LIVE, STOP, HELP};
-  static final String[] _capCommands    = {"Run", "Live", "Stop", "Help"};
+  static final int      STOP            = 2;
+  static final int      HELP            = 3;
+  static final int[]    _commands       = {RUN, STOP, HELP};
+  static final String[] _capCommands    = {"Run", "Stop", "Help"};
   static final int      BUTTON_COUNT    = _commands.length;
   static final int      BUTTON_WIDTH    = 27;
   static final int      BUTTON_HEIGHT   = 32;
   static final int      BUTTON_GAP      = 5;
   static final int      IMAGE_SIZE      = 33;
-  static final int      OFFSET_OVER     = 105;
+  static final int      OFFSET_OVER     = 125;
   static final int      OFFSET_DOWN     = 25;
-  static final int      TEXT_OVER       = 65;
+  static final int      TEXT_OVER       = 70;
   static final int      TEXT_DOWN       = 45;
   static final int      WIDTH           = 220;
   static final int      HEIGHT          = 67;
@@ -59,7 +58,6 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
   
   // Ruby-Related variables.
   private Ruby                  _ruby;
-  private RubyProcessingConsole _console;
   
   // The name of the beast.
   public String getMenuTitle() {
@@ -100,12 +98,6 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
         if (isRunning()) spinDown();
         break;
         
-      case LIVE:
-        // _console = new RubyProcessingConsole("TITLE!");
-        // runCommand(RUN);
-        System.out.println("Coming Soon...");
-        break;
-        
       case RUN:
         try {
           Sketch sketch = _editor.getSketch();
@@ -131,36 +123,16 @@ public class RubyProcessingPlugin extends JPanel implements Tool, MouseInputList
     RubyInstanceConfig config = new RubyInstanceConfig() {{
       setLoader(this.getClass().getClassLoader());
     }};
-    if (hasConsole()) config = _console.configureConsole(config);
     _ruby = Ruby.newInstance(config);
-    if (hasConsole()) _console.startConsole(_ruby);
-    
-    final Ruby go = _ruby;
-    final String where = path;
-    Thread thread = new Thread() {
-      public void run() {
-        try { Thread.sleep(2000); } catch(InterruptedException e) {}
-        go.evalScriptlet("RP5_EMBEDDED = true; ARGV[0] = '" + where + "'; require 'ruby-processing/lib/ruby-processing/runners/run.rb'");
-      }
-    };
-    thread.start();
+    _ruby.evalScriptlet("RP5_EMBEDDED = true; ARGV[0] = '" + path + "'; require 'ruby-processing/lib/ruby-processing/runners/run.rb'");
   }
   
   // Spin down the current running Ruby VM.
   private void spinDown() {
-    if (hasConsole()) {
-      _console.dispose();
-      _console = null;
-    }
     _ruby.evalScriptlet("$app.close if $app");
     // TODO: Seems to leak memory ... System.gc() doesn't help...
     _ruby.tearDown();
     _ruby = null;
-  }
-  
-  // Do we have a console?
-  public boolean hasConsole() {
-    return _console != null;
   }
   
   // Are is there a running Ruby VM?
